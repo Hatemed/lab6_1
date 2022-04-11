@@ -1,0 +1,94 @@
+﻿<Window x:Class="WpfApp1.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Closing="WpfApp1_Closing"  
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp1"
+        mc:Ignorable="d"
+        Title="lab 6.1" Height="618" Width="825">
+    <Window.Resources>
+        <local:Converter x:Key="key_multi"/>
+        <local:DoubleConvert x:Key="DoubleConvert"/>
+    </Window.Resources>
+    <StackPanel Margin="0,0,0,25">
+        <Menu Height="20" Width="827" RenderTransformOrigin="0.298,-0.49">
+            <MenuItem Header="File">
+                <MenuItem Header="New"  Click="New_Click" />
+                <MenuItem Header="Open" Click="Open_Click"/>
+                <MenuItem Header="Save" Click="Save_Click"/>
+            </MenuItem>
+            <MenuItem Header="Edit" >
+                <MenuItem Header="Add VMTime" Click="Add_VMTime"/>
+                <MenuItem Header="Add VMAccuracy" Click="Add_VMAccuracy"/>
+            </MenuItem>
+        </Menu>
+        <Grid>
+            <ComboBox Name="comboBoxIn" SelectedValue="{Binding Path=VMGrid.VMf}" Margin="10,52,507,-55" RenderTransformOrigin="0.491,0.573"/>
+            <TextBlock Margin="10,0,507,0" >
+                Количество точек; левая граница; правая граница
+            </TextBlock>
+            <TextBox Margin="10,24,507,-28">
+                <TextBox.Text>
+                    <MultiBinding Converter="{StaticResource key_multi}">
+                        <Binding Path="VMGrid.N"/>
+                        <Binding Path="VMGrid.Min"/>
+                        <Binding Path="VMGrid.Max" />
+                    </MultiBinding>
+                </TextBox.Text>
+            </TextBox>
+            <TextBox RenderTransformOrigin="0.426,6.577" Margin="10,491,507,-492" Text="{Binding Path=public_str_change, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+        </Grid>
+        <Grid Height="526" Width="822">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="76*"/>
+                <RowDefinition Height="187*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="292*"/>
+                <ColumnDefinition Width="10*"/>
+                <ColumnDefinition Width="250*"/>
+                <ColumnDefinition Width="735*"/>
+            </Grid.ColumnDefinitions>
+            <ListBox Name="Time" ItemsSource="{Binding Path=VMBenchmark.VMTimes}" SelectedItem="{Binding Selected}" Margin="145,10,267,35" Grid.Column="2" Grid.RowSpan="2" Grid.ColumnSpan="2" >
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <TextBlock Text="{Binding StringFormat=Функция: {0}, Path=Grid.VMf}" />
+                            <TextBlock Text="{Binding StringFormat=Количество точек: {0}, Path=Grid.N}" />
+                            <TextBlock Text="{Binding StringFormat=Левая граница: {0}, Path=Grid.Min}" />
+                            <TextBlock Text="{Binding StringFormat=Правая граница: {0}, Path=Grid.Max}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel Margin="10,64,34,276" Grid.ColumnSpan="3" Grid.RowSpan="2">
+                <TextBlock Text="Коэффициенты отношения времени в режиме VML_HA  к времени вычислений без использования Intel MKL:" TextWrapping="Wrap" Width="304"/>
+                <TextBlock Text="{Binding ElementName=Time,Path=SelectedItem.Time_HA_base, Converter={StaticResource DoubleConvert}}" TextWrapping="Wrap"/>
+                <TextBlock Text="Коэффициенты отношения времени в режиме VML_EP  к времени вычислений без использования Intel MKL:" TextWrapping="Wrap" Width="306"/>
+                <TextBlock Text="{Binding ElementName=Time,Path=SelectedItem.Time_EP_base, Converter={StaticResource DoubleConvert}}" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <ListBox Name="Accuracy" ItemsSource="{Binding VMBenchmark.VMAccuracies}" SelectedItem="{Binding Selected}" Margin="234,10,24,35" Grid.Column="3" Grid.RowSpan="2" >
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <TextBlock Text="{Binding Grid.VMf, StringFormat=Функция: \{0\}}" />
+                            <TextBlock Text="{Binding Grid.N, StringFormat=Количество точек: \{0\}}" />
+                            <TextBlock Text="{Binding Grid.Min, StringFormat=Левая граница: \{0\}}" />
+                            <TextBlock Text="{Binding Grid.Max, StringFormat=Правая граница: \{0\}}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel Margin="10,111,34,63" Grid.ColumnSpan="3" Grid.Row="1">
+                <TextBlock Text="Значение аргумента, при котором максимально отличаются значения функции, вычисленные в режимах WML_EP и WML_HA:" TextWrapping="Wrap" Width="306"/>
+                <TextBlock Text="{Binding ElementName=Accuracy,Path=SelectedItem.Max_sub_arg}" TextWrapping="Wrap"/>
+                <TextBlock Text="соответствующие значения функции(WML_HA):" TextWrapping="Wrap" Width="306"/>
+                <TextBlock Text="{Binding ElementName=Accuracy,Path=SelectedItem.Max_sub_value_HA}" TextWrapping="Wrap"/>
+                <TextBlock Text="соответствующие значения функции(WML_EP):" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding ElementName=Accuracy,Path=SelectedItem.Max_sub_value_EP}" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</Window>
