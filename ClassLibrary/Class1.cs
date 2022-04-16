@@ -1,9 +1,5 @@
 ﻿using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text.Json;
 
 namespace ClassLibrary
 {
@@ -93,7 +89,7 @@ namespace ClassLibrary
         }
     }
     public class VMBenchmark
-    {
+    { 
         [DllImport(@"C:\Users\User\source\repos\lab6_1\x64\Debug\Dll.dll")]
         static extern void vmd(int n, double min, double max, int num_func, int[] time, double[] max_value);
         public ObservableCollection<VMTime> VMTimes { get; set; }
@@ -105,152 +101,58 @@ namespace ClassLibrary
         }
         public void AddVMTime(VMGrid New_grid)
         {
-            VMGrid copyGrid = new VMGrid(New_grid.N, New_grid.Min, New_grid.Max, New_grid.VMf);
-            int[] time = new int[3];
-            double[] max_value = new double[3];
-            vmd(copyGrid.N, copyGrid.Min, copyGrid.Max, (int)copyGrid.VMf, time, max_value);
-            var new_time = new VMTime(copyGrid, time[0], time[1], time[2]);
-            VMTimes.Add(new_time);
+            try
+            {
+                VMGrid copyGrid = new VMGrid(New_grid.N, New_grid.Min, New_grid.Max, New_grid.VMf);
+                int[] time = new int[3];
+                double[] max_value = new double[3];
+                vmd(copyGrid.N, copyGrid.Min, copyGrid.Max, (int)copyGrid.VMf, time, max_value);
+                var new_time = new VMTime(copyGrid, time[0], time[1], time[2]);
+                VMTimes.Add(new_time);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
         public void AddVMAccuracy(VMGrid New_grid)
         {
-            VMGrid copyGrid = new VMGrid(New_grid.N, New_grid.Min, New_grid.Max, New_grid.VMf);
-            int[] time = new int[3];
-            double[] max_value = new double[3];
-            vmd(copyGrid.N, copyGrid.Min, copyGrid.Max, (int)copyGrid.VMf, time, max_value);
-            var new_accur = new VMAccuracy(copyGrid, max_value[0], max_value[1], max_value[2]);
-            VMAccuracies.Add(new_accur);
-        }
-        public double Time_HA_base
-        {
-            get
+            try
             {
-                double max = -1;
-                for (int i = 0; i < VMTimes.Count; i++)
-                {
-                    if (max < VMTimes[i].Time_HA_base)
-                        max = VMTimes[i].Time_HA_base;
-                }
-                return max;
+                VMGrid copyGrid = new VMGrid(New_grid.N, New_grid.Min, New_grid.Max, New_grid.VMf);
+                int[] time = new int[3];
+                double[] max_value = new double[3];
+                vmd(copyGrid.N, copyGrid.Min, copyGrid.Max, (int)copyGrid.VMf, time, max_value);
+                var new_accur = new VMAccuracy(copyGrid, max_value[0], max_value[1], max_value[2]);
+                VMAccuracies.Add(new_accur);
+
+            }
+            catch(Exception ex)
+            {
+                throw;
             }
         }
-        public double Time_EP_base
+        public double Time_HA_base_min
         {
             get
             {
-                double max = -1;
-                for (int i = 0; i < VMTimes.Count; i++)
-                {
-                    if (max < VMTimes[i].Time_EP_base)
-                        max = VMTimes[i].Time_EP_base;
-                }
-                return max;
+                var numDataItem = from i in VMTimes select i;
+                if (numDataItem != null && numDataItem.Any())
+                    return (numDataItem.Aggregate((i1, i2) => i1.Time_HA_base < i2.Time_HA_base ? i1 : i2)).Time_HA_base;
+                else
+                    return -1;
+            }
+        }
+        public double Time_HA_base_max
+        {
+            get 
+            {
+                var numDataItem = from i in VMTimes select i;
+                if (numDataItem != null && numDataItem.Any())
+                    return (numDataItem.Aggregate((i1, i2) => i1.Time_HA_base > i2.Time_HA_base ? i1 : i2)).Time_HA_base;
+                else
+                    return -1;
             }
         }
     }
-    public class ViewData: INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
-        public VMGrid VMGrid { get; set; }
-        public VMBenchmark VMBenchmark { get; set; }
-        public ViewData(VMBenchmark VMBenchmark)
-        {
-            this.VMBenchmark = VMBenchmark;
-            this.VMGrid = new VMGrid();
-            VMBenchmark.VMTimes.CollectionChanged += Time_CollectionChanged;
-            VMBenchmark.VMAccuracies.CollectionChanged += Accuracy_CollectionChanged;
-
-        }
-        public void OnPropertyChanged([CallerMemberName] string prop = "")
-        {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(prop));
-        }
-        void Time_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            OnPropertyChanged("VMBenchmark.VMTimes");
-        }
-        void Accuracy_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            OnPropertyChanged("VMBenchmark.VMAccuracies");
-        }
-        public void AddVMTime(VMGrid New_grid)
-        {
-            VMBenchmark.AddVMTime(New_grid);
-        }
-        public void AddVMAccuracy(VMGrid New_grid)
-        {
-            VMBenchmark.AddVMAccuracy(New_grid);
-        }
-        public bool Save(string filename)
-        {
-            string jsonString = JsonSerializer.Serialize(VMBenchmark);
-            try
-            {
-                using (StreamWriter writer = new StreamWriter(filename, false))
-                {
-                    writer.Write(jsonString);
-                };
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine("The file could not be read:");
-                Console.WriteLine(e.Message);
-                return false;
-            }
-            return true;
-        }
-        public bool Load(string filename)
-        {
-            try
-            {
-                using (StreamReader sr = new StreamReader(filename))
-                {
-                    string jsonString;
-                    jsonString = sr.ReadLine();
-                    VMBenchmark VMBenchmark = JsonSerializer.Deserialize<VMBenchmark>(jsonString);
-                    this.VMBenchmark.VMAccuracies.Clear();
-                    for (int i = 0; i < VMBenchmark.VMAccuracies.Count; i++)
-                    {
-                        this.VMBenchmark.VMAccuracies.Add(VMBenchmark.VMAccuracies[i]);
-                    }
-                    this.VMBenchmark.VMTimes.Clear();
-                    for(int i = 0; i< VMBenchmark.VMTimes.Count; i++)
-                    {
-                        this.VMBenchmark.VMTimes.Add(VMBenchmark.VMTimes[i]);
-                    }
-                }
-
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine("The file could not be read:");
-                Console.WriteLine(e.Message);
-                return false;
-            }
-            return true;
-        }
-        private bool private_change = false;
-        private string str_change = "Данные не изменены";
-        public string public_str_change { get { return str_change; } set { str_change = value; OnPropertyChanged("public_str_change");} }
-        public bool change
-        {
-            get
-            {
-                return private_change;
-            }
-            set
-            {
-                private_change = value;
-                if (change) { public_str_change = "Данные изменены"; }
-                else { public_str_change = "Данные не изменены"; }
-            }
-        }
-        public ViewData()
-        {
-            this.VMBenchmark = new VMBenchmark();
-            this.VMGrid = new VMGrid();
-        }
-    }
-
 }
